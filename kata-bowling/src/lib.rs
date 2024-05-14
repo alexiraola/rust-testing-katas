@@ -115,4 +115,18 @@ mod tests {
 
         assert_eq!(bowling_game.calculate_result(), 300);
     }
+
+    #[test]
+    fn calculates_socre_for_alternate_spare_strike() {
+        let mut bowling_game = BowlingGame::new();
+
+        for _ in 0..5 {
+            bowling_game.roll(10);
+            bowling_game.roll(3);
+            bowling_game.roll(7);
+        }
+        bowling_game.roll(10);
+
+        assert_eq!(bowling_game.calculate_result(), 200);
+    }
 }
