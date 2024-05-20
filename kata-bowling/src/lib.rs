@@ -1,5 +1,125 @@
 const MAX_POINTS: i32 = 10;
 
+trait Frame {
+    fn score(&self) -> i32;
+    fn rolls(&self, count: i32) -> i32;
+    fn next_frame(&self) -> Option<&Box<dyn Frame>>;
+    fn total_score(&self) -> i32 {
+        if let Some(frame) = self.next_frame() {
+            self.score() + frame.total_score()
+        } else {
+            self.score()
+        }
+    }
+}
+
+struct OpenFrame {
+    first_roll: i32,
+    second_roll: i32,
+    next_frame: Option<Box<dyn Frame>>,
+}
+
+impl Frame for OpenFrame {
+    fn score(&self) -> i32 {
+        self.first_roll + self.second_roll
+    }
+
+    fn rolls(&self, count: i32) -> i32 {
+        match count {
+            0 => 0,
+            1 => self.first_roll,
+            _ => self.first_roll + self.second_roll,
+        }
+    }
+
+    fn next_frame(&self) -> Option<&Box<dyn Frame>> {
+        self.next_frame.as_ref()
+    }
+}
+
+struct SpareFrame {
+    first_roll: i32,
+    second_roll: i32,
+    next_frame: Option<Box<dyn Frame>>,
+}
+
+impl Frame for SpareFrame {
+    fn score(&self) -> i32 {
+        MAX_POINTS
+            + match self.next_frame() {
+                Some(frame) => frame.rolls(1),
+                None => 0,
+            }
+    }
+
+    fn rolls(&self, count: i32) -> i32 {
+        match count {
+            0 => 0,
+            1 => self.first_roll,
+            _ => self.first_roll + self.second_roll,
+        }
+    }
+
+    fn next_frame(&self) -> Option<&Box<dyn Frame>> {
+        self.next_frame.as_ref()
+    }
+}
+
+struct StrikeFrame {
+    next_frame: Option<Box<dyn Frame>>,
+}
+
+impl Frame for StrikeFrame {
+    fn score(&self) -> i32 {
+        MAX_POINTS
+            + match &self.next_frame {
+                Some(frame) => frame.rolls(2),
+                None => 0,
+            }
+    }
+
+    fn rolls(&self, count: i32) -> i32 {
+        match count {
+            0 => 0,
+            1 => MAX_POINTS,
+            _ => {
+                MAX_POINTS
+                    + match self.next_frame() {
+                        Some(frame) => frame.rolls(1),
+                        None => 0,
+                    }
+            }
+        }
+    }
+
+    fn next_frame(&self) -> Option<&Box<dyn Frame>> {
+        self.next_frame.as_ref()
+    }
+}
+
+struct BonusFrame {
+    first_roll: i32,
+    second_roll: i32,
+}
+
+impl Frame for BonusFrame {
+    fn score(&self) -> i32 {
+        0
+    }
+
+    fn rolls(&self, count: i32) -> i32 {
+        match count {
+            0 => 0,
+            1 => self.first_roll,
+            _ => self.first_roll + self.second_roll,
+        }
+    }
+
+    fn next_frame(&self) -> Option<&Box<dyn Frame>> {
+        None
+    }
+}
+
 pub struct BowlingGame {
     rolls: Vec<i32>,
 }
@@ -13,28 +133,37 @@ impl BowlingGame {
     }
 
     pub fn calculate_result(&self) -> i32 {
-        self.calculate_result_recursive(0, 0)
+        if let Some(frame) = self.build_frames(0, 0) {
+            frame.total_score()
+        } else {
+            0
+        }
     }
 
-    fn calculate_result_recursive(&self, frame: usize, index: usize) -> i32 {
+    fn build_frames(&self, frame: i32, frame_index: usize) -> Option<Box<dyn Frame>> {
         if frame == 10 {
-            return 0;
+            return Some(Box::new(BonusFrame {
+                first_roll: *self.rolls.get(frame_index).unwrap_or(&0),
+                second_roll: *self.rolls.get(frame_index + 1).unwrap_or(&0),
+            }));
         }
-        if self.is_strike(index) {
-            return MAX_POINTS
-                + self.rolls[index + 1]
-                + self.rolls[index + 2]
-                + self.calculate_result_recursive(frame + 1, index + 1);
+        if self.is_strike(frame_index) {
+            return Some(Box::new(StrikeFrame {
+                next_frame: self.build_frames(frame + 1, frame_index + 1),
+            }));
         }
-        if self.is_spare(index) {
-            return MAX_POINTS
-                + self.rolls[index + 2]
-                + self.calculate_result_recursive(frame + 1, index + 2);
+        if self.is_spare(frame_index) {
+            return Some(Box::new(SpareFrame {
+                first_roll: self.rolls[frame_index],
+                second_roll: self.rolls[frame_index + 1],
+                next_frame: self.build_frames(frame + 1, frame_index + 2),
+            }));
         }
-
-        self.rolls[index]
-            + self.rolls[index + 1]
-            + self.calculate_result_recursive(frame + 1, index + 2)
+        Some(Box::new(OpenFrame {
+            first_roll: self.rolls[frame_index],
+            second_roll: self.rolls[frame_index + 1],
+            next_frame: self.build_frames(frame + 1, frame_index + 2),
+        }))
     }
 
     fn is_spare(&self, frame_index: usize) -> bool {
