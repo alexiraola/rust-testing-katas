@@ -15,6 +15,12 @@ enum Orientation {
     W,
 }
 
+pub enum Command {
+    R,
+    L,
+    F,
+}
+
 pub struct Rover {
     x: i32,
     y: i32,
@@ -26,12 +32,42 @@ impl Rover {
         format!("{}:{}:{:#?}", self.x, self.y, self.orientation)
     }
 
-    pub fn execute(&mut self, commands: Vec<String>) {
-        if commands[0].eq("L") {
-            self.orientation = Orientation::W;
+    pub fn execute(&mut self, commands: Vec<Command>) {
+        commands.iter().for_each(|c| self.execute_command(c));
+    }
+
+    fn execute_command(&mut self, command: &Command) {
+        match command {
+            Command::R => self.rotate_right(),
+            Command::L => self.rotate_left(),
+            Command::F => self.move_forward(),
         }
-        if commands[0].eq("R") {
-            self.orientation = Orientation::E;
+    }
+
+    fn rotate_right(&mut self) {
+        match self.orientation {
+            Orientation::N => self.orientation = Orientation::E,
+            Orientation::E => self.orientation = Orientation::S,
+            Orientation::S => self.orientation = Orientation::W,
+            Orientation::W => self.orientation = Orientation::N,
+        }
+    }
+
+    fn rotate_left(&mut self) {
+        match self.orientation {
+            Orientation::N => self.orientation = Orientation::W,
+            Orientation::E => self.orientation = Orientation::N,
+            Orientation::S => self.orientation = Orientation::E,
+            Orientation::W => self.orientation = Orientation::S,
+        }
+    }
+
+    fn move_forward(&mut self) {
+        match self.orientation {
+            Orientation::N => self.y += 1,
+            Orientation::E => self.x += 1,
+            Orientation::S => self.y -= 1,
+            Orientation::W => self.x -= 1,
         }
     }
 }
@@ -60,7 +96,7 @@ mod tests {
     fn turns_left() {
         let mut rover = Rover::default();
 
-        rover.execute(vec!["L".to_string()]);
+        rover.execute(vec![Command::L]);
 
         assert_eq!(rover.position(), "0:0:W");
     }
@@ -69,8 +105,44 @@ mod tests {
     fn turns_right() {
         let mut rover = Rover::default();
 
-        rover.execute(vec!["R".to_string()]);
+        rover.execute(vec![Command::R]);
 
         assert_eq!(rover.position(), "0:0:E");
+    }
+
+    #[test]
+    fn moves_forward() {
+        let mut rover = Rover::default();
+
+        rover.execute(vec![Command::F]);
+
+        assert_eq!(rover.position(), "0:1:N");
+    }
+
+    #[test]
+    fn moves_forward_twice_to_the_right() {
+        let mut rover = Rover::default();
+
+        rover.execute(vec![Command::R, Command::F, Command::F]);
+
+        assert_eq!(rover.position(), "2:0:E");
+    }
+
+    #[test]
+    fn turns_twice_right() {
+        let mut rover = Rover::default();
+
+        rover.execute(vec![Command::R, Command::R]);
+
+        assert_eq!(rover.position(), "0:0:S");
+    }
+
+    #[test]
+    fn turns_twice_left() {
+        let mut rover = Rover::default();
+
+        rover.execute(vec![Command::L, Command::L]);
+
+        assert_eq!(rover.position(), "0:0:S");
     }
 }
