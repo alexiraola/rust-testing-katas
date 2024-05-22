@@ -7,6 +7,9 @@
 // LLFF => '0:8:S'
 // FRFFR => '2:1:S'
 
+use core::fmt;
+use std::fmt::Display;
+
 #[derive(Debug)]
 enum Orientation {
     N,
@@ -21,15 +24,25 @@ pub enum Command {
     F,
 }
 
-pub struct Rover {
+struct Location {
     x: i32,
     y: i32,
+}
+
+impl Display for Location {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:{}", self.x, self.y)
+    }
+}
+
+pub struct Rover {
+    location: Location,
     orientation: Orientation,
 }
 
 impl Rover {
     pub fn position(&self) -> String {
-        format!("{}:{}:{:#?}", self.x, self.y, self.orientation)
+        format!("{}:{:#?}", self.location, self.orientation)
     }
 
     pub fn execute(&mut self, commands: Vec<Command>) {
@@ -63,11 +76,23 @@ impl Rover {
     }
 
     fn move_forward(&mut self) {
-        match self.orientation {
-            Orientation::N => self.y += 1,
-            Orientation::E => self.x += 1,
-            Orientation::S => self.y -= 1,
-            Orientation::W => self.x -= 1,
+        self.location = match self.orientation {
+            Orientation::N => Location {
+                x: self.location.x,
+                y: self.location.y + 1,
+            },
+            Orientation::E => Location {
+                x: self.location.x + 1,
+                y: self.location.y,
+            },
+            Orientation::S => Location {
+                x: self.location.x,
+                y: self.location.y - 1,
+            },
+            Orientation::W => Location {
+                x: self.location.x - 1,
+                y: self.location.y,
+            },
         }
     }
 }
@@ -75,8 +100,7 @@ impl Rover {
 impl Default for Rover {
     fn default() -> Self {
         Self {
-            x: 0,
-            y: 0,
+            location: Location { x: 0, y: 0 },
             orientation: Orientation::N,
         }
     }
