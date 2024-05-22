@@ -31,7 +31,7 @@ pub struct Rover {
 }
 
 impl Rover {
-    pub fn position(&self) -> String {
+    pub fn format_position(&self) -> String {
         format!("{}:{:#?}", self.location, self.orientation)
     }
 
@@ -91,7 +91,7 @@ mod tests {
     #[test]
     fn creates_rover_at_initial_position() {
         let rover = Rover::default();
-        assert_eq!(rover.position(), "0:0:N");
+        assert_eq!(rover.format_position(), "0:0:N");
     }
 
     #[test]
@@ -100,7 +100,7 @@ mod tests {
 
         rover.execute(vec![Command::L]);
 
-        assert_eq!(rover.position(), "0:0:W");
+        assert_eq!(rover.format_position(), "0:0:W");
     }
 
     #[test]
@@ -109,7 +109,7 @@ mod tests {
 
         rover.execute(vec![Command::R]);
 
-        assert_eq!(rover.position(), "0:0:E");
+        assert_eq!(rover.format_position(), "0:0:E");
     }
 
     #[test]
@@ -118,7 +118,7 @@ mod tests {
 
         rover.execute(vec![Command::F]);
 
-        assert_eq!(rover.position(), "0:1:N");
+        assert_eq!(rover.format_position(), "0:1:N");
     }
 
     #[test]
@@ -127,7 +127,7 @@ mod tests {
 
         rover.execute(vec![Command::R, Command::F, Command::F]);
 
-        assert_eq!(rover.position(), "2:0:E");
+        assert_eq!(rover.format_position(), "2:0:E");
     }
 
     #[test]
@@ -136,7 +136,7 @@ mod tests {
 
         rover.execute(vec![Command::R, Command::R]);
 
-        assert_eq!(rover.position(), "0:0:S");
+        assert_eq!(rover.format_position(), "0:0:S");
     }
 
     #[test]
@@ -145,6 +145,6 @@ mod tests {
 
         rover.execute(vec![Command::L, Command::L]);
 
-        assert_eq!(rover.position(), "0:0:S");
+        assert_eq!(rover.format_position(), "0:0:S");
     }
 }
