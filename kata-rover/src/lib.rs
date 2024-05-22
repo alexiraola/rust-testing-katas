@@ -6,9 +6,10 @@
 // LFF => '8:0:W'
 // LLFF => '0:8:S'
 // FRFFR => '2:1:S'
+//
+mod location;
 
-use core::fmt;
-use std::fmt::Display;
+use location::Location;
 
 #[derive(Debug)]
 enum Orientation {
@@ -22,17 +23,6 @@ pub enum Command {
     R,
     L,
     F,
-}
-
-struct Location {
-    x: i32,
-    y: i32,
-}
-
-impl Display for Location {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}", self.x, self.y)
-    }
 }
 
 pub struct Rover {
@@ -77,22 +67,10 @@ impl Rover {
 
     fn move_forward(&mut self) {
         self.location = match self.orientation {
-            Orientation::N => Location {
-                x: self.location.x,
-                y: self.location.y + 1,
-            },
-            Orientation::E => Location {
-                x: self.location.x + 1,
-                y: self.location.y,
-            },
-            Orientation::S => Location {
-                x: self.location.x,
-                y: self.location.y - 1,
-            },
-            Orientation::W => Location {
-                x: self.location.x - 1,
-                y: self.location.y,
-            },
+            Orientation::N => self.location.increase_y(),
+            Orientation::E => self.location.increase_x(),
+            Orientation::S => self.location.decrease_y(),
+            Orientation::W => self.location.decrease_x(),
         }
     }
 }
@@ -100,7 +78,7 @@ impl Rover {
 impl Default for Rover {
     fn default() -> Self {
         Self {
-            location: Location { x: 0, y: 0 },
+            location: Location::create(0, 0),
             orientation: Orientation::N,
         }
     }
