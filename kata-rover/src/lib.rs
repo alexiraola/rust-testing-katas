@@ -1,6 +1,8 @@
 mod location;
+mod navigator;
 
 use location::Location;
+use navigator::{Navigator, NorthNavigator};
 
 #[derive(Debug, Clone)]
 enum Orientation {
@@ -16,64 +18,32 @@ pub enum Command {
     F,
 }
 
-#[derive(Clone)]
 pub struct Rover {
-    location: Location,
-    orientation: Orientation,
+    navigator: Box<dyn Navigator>,
 }
 
 impl Rover {
     pub fn format_position(&self) -> String {
-        format!("{}:{:#?}", self.location, self.orientation)
+        self.navigator.format()
     }
 
     pub fn execute(&self, commands: Vec<Command>) -> Rover {
         commands
             .iter()
-            .fold(self.clone(), |r, c| r.execute_command(c))
+            .fold(Rover::default(), |r, c| r.execute_command(c))
     }
 
     fn execute_command(&self, command: &Command) -> Rover {
         match command {
-            Command::R => self.rotate_right(),
-            Command::L => self.rotate_left(),
-            Command::F => self.move_forward(),
-        }
-    }
-
-    fn rotate_right(&self) -> Rover {
-        Rover {
-            location: self.location.clone(),
-            orientation: match self.orientation {
-                Orientation::N => Orientation::E,
-                Orientation::E => Orientation::S,
-                Orientation::S => Orientation::W,
-                Orientation::W => Orientation::N,
+            Command::R => Rover {
+                navigator: self.navigator.rotate_right(),
             },
-        }
-    }
-
-    fn rotate_left(&self) -> Rover {
-        Rover {
-            location: self.location.clone(),
-            orientation: match self.orientation {
-                Orientation::N => Orientation::W,
-                Orientation::E => Orientation::N,
-                Orientation::S => Orientation::E,
-                Orientation::W => Orientation::S,
+            Command::L => Rover {
+                navigator: self.navigator.rotate_left(),
             },
-        }
-    }
-
-    fn move_forward(&self) -> Rover {
-        Rover {
-            location: match self.orientation {
-                Orientation::N => self.location.increase_y(),
-                Orientation::E => self.location.increase_x(),
-                Orientation::S => self.location.decrease_y(),
-                Orientation::W => self.location.decrease_x(),
+            Command::F => Rover {
+                navigator: self.navigator.move_forward(),
             },
-            orientation: self.orientation.clone(),
         }
     }
 }
@@ -81,8 +51,9 @@ impl Rover {
 impl Default for Rover {
     fn default() -> Self {
         Self {
-            location: Location::create(0, 0),
-            orientation: Orientation::N,
+            navigator: Box::new(NorthNavigator {
+                location: Location::create(0, 0),
+            }),
         }
     }
 }
