@@ -3,6 +3,7 @@ use std::fmt;
 const WORLD_WIDTH: i32 = 10;
 const WORLD_HEIGHT: i32 = 10;
 
+#[derive(Clone)]
 pub struct Location {
     x: i32,
     y: i32,
