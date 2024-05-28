@@ -1,6 +1,7 @@
 use crate::location::Location;
 
 pub trait Navigator {
+    fn clone(&self) -> Box<dyn Navigator>;
     fn format(&self) -> String;
     fn rotate_left(&self) -> Box<dyn Navigator>;
     fn rotate_right(&self) -> Box<dyn Navigator>;
@@ -12,6 +13,12 @@ pub struct NorthNavigator {
 }
 
 impl Navigator for NorthNavigator {
+    fn clone(&self) -> Box<dyn Navigator> {
+        Box::new(NorthNavigator {
+            location: self.location.clone(),
+        })
+    }
+
     fn format(&self) -> String {
         format!("{}:N", self.location)
     }
@@ -40,6 +47,12 @@ struct EastNavigator {
 }
 
 impl Navigator for EastNavigator {
+    fn clone(&self) -> Box<dyn Navigator> {
+        Box::new(EastNavigator {
+            location: self.location.clone(),
+        })
+    }
+
     fn format(&self) -> String {
         format!("{}:E", self.location)
     }
@@ -68,6 +81,12 @@ struct SouthNavigator {
 }
 
 impl Navigator for SouthNavigator {
+    fn clone(&self) -> Box<dyn Navigator> {
+        Box::new(SouthNavigator {
+            location: self.location.clone(),
+        })
+    }
+
     fn format(&self) -> String {
         format!("{}:S", self.location)
     }
@@ -96,6 +115,12 @@ struct WestNavigator {
 }
 
 impl Navigator for WestNavigator {
+    fn clone(&self) -> Box<dyn Navigator> {
+        Box::new(WestNavigator {
+            location: self.location.clone(),
+        })
+    }
+
     fn format(&self) -> String {
         format!("{}:W", self.location)
     }

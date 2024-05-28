@@ -4,14 +4,6 @@ mod navigator;
 use location::Location;
 use navigator::{Navigator, NorthNavigator};
 
-#[derive(Debug, Clone)]
-enum Orientation {
-    N,
-    E,
-    S,
-    W,
-}
-
 pub enum Command {
     R,
     L,
@@ -28,9 +20,12 @@ impl Rover {
     }
 
     pub fn execute(&self, commands: Vec<Command>) -> Rover {
-        commands
-            .iter()
-            .fold(Rover::default(), |r, c| r.execute_command(c))
+        commands.iter().fold(
+            Rover {
+                navigator: self.navigator.clone(),
+            },
+            |r, c| r.execute_command(c),
+        )
     }
 
     fn execute_command(&self, command: &Command) -> Rover {
