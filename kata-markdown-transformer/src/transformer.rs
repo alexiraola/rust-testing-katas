@@ -1,39 +1,35 @@
-use regex::Regex;
+use crate::links::Links;
 
 pub struct Transformer {
     markdown: String,
-    links: Vec<Link>,
+    links: Links,
 }
+
 impl Transformer {
-    fn new(markdown: &str) -> Self {
+    pub fn new(markdown: &str) -> Self {
         Self {
             markdown: markdown.to_string(),
-            links: vec![],
+            links: Links::create(markdown.to_string()),
         }
     }
 
-    fn transform(&self) -> String {
-        self.markdown.clone()
-    }
+    pub fn transform(&self) -> String {
+        let transformed =
+            self.links
+                .all_links()
+                .iter()
+                .fold(self.markdown.to_string(), |md, link| {
+                    let index = self.links.index_of(&link.url);
+                    let new_link = format!("{} [^anchor{}]", link.text, index.unwrap() + 1);
 
-    fn links(&self) -> Vec<Link> {
-        let mut links: Vec<Link> = vec![];
-        let pattern = r"\[([^\]]+)\]\(([^\)]+)\)";
-        let re = Regex::new(pattern).unwrap();
-        for cap in re.captures_iter(&self.markdown) {
-            links.push(Link {
-                text: cap[1].to_string(),
-                url: cap[2].to_string(),
-            })
-        }
-        links
+                    md.replace(link.link.as_str(), new_link.as_str())
+                });
+        let footnote = self
+            .links
+            .map_unique(|link, index| format!("[^anchor{}]: {}", index, link));
+        let result: Vec<String> = std::iter::once(transformed).chain(footnote).collect();
+        result.join("\n")
     }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-struct Link {
-    text: String,
-    url: String,
 }
 
 #[cfg(test)]
@@ -47,15 +43,23 @@ mod tests {
     }
 
     #[test]
-    fn finds_links() {
-        let transformer = Transformer::new("[link](https://link.com)");
+    fn transforms_one_link() {
+        let transformer =
+            Transformer::new("[this book](https://codigosostenible.com) and some other text.");
+        assert_eq!(transformer.transform(), String::from("this book [^anchor1] and some other text.\n[^anchor1]: https://codigosostenible.com"));
+    }
 
-        assert_eq!(
-            transformer.links(),
-            vec![Link {
-                text: "link".to_string(),
-                url: "https://link.com".to_string()
-            }]
-        );
+    #[test]
+    fn transforms_many_links() {
+        let transformer =
+            Transformer::new("[this book](https://codigosostenible.com) and some [other book](https://example.com) are good choices.");
+        assert_eq!(transformer.transform(), String::from("this book [^anchor1] and some other book [^anchor2] are good choices.\n[^anchor1]: https://codigosostenible.com\n[^anchor2]: https://example.com"));
+    }
+
+    #[test]
+    fn transforms_many_repeated_links() {
+        let transformer =
+            Transformer::new("[this book](https://codigosostenible.com) and some [other book](https://example.com) are good choices. The best one is [the first](https://codigosostenible.com).");
+        assert_eq!(transformer.transform(), String::from("this book [^anchor1] and some other book [^anchor2] are good choices. The best one is the first [^anchor1].\n[^anchor1]: https://codigosostenible.com\n[^anchor2]: https://example.com"));
     }
 }
