@@ -1,3 +1,4 @@
+pub mod common;
 pub mod email;
-pub mod hash;
+pub mod id;
 pub mod password;
