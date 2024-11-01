@@ -83,7 +83,7 @@ impl Eq for Password {}
 
 #[cfg(test)]
 mod test {
-    use crate::domain::password::Password;
+    use crate::domain::value_objects::password::Password;
     use regex::Regex;
 
     #[test]

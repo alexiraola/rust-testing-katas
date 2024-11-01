@@ -1,4 +1,3 @@
 pub mod common;
-pub mod email;
-pub mod id;
-pub mod password;
+pub mod entities;
+pub mod value_objects;

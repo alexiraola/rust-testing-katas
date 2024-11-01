@@ -46,7 +46,7 @@ impl Eq for Id {}
 
 #[cfg(test)]
 mod test {
-    use crate::domain::id::Id;
+    use crate::domain::value_objects::id::Id;
     use regex::Regex;
 
     #[test]

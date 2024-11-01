@@ -37,7 +37,7 @@ impl Eq for Email {}
 
 #[cfg(test)]
 mod test {
-    use crate::domain::email::Email;
+    use crate::domain::value_objects::email::Email;
 
     #[test]
     fn create_email_with_correct_format() {
