@@ -3,7 +3,7 @@ use core::{fmt, panic};
 use crate::domain::common::hash;
 use regex::Regex;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Password {
     password: String,
 }

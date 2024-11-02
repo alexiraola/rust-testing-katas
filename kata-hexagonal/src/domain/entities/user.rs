@@ -2,11 +2,11 @@ use core::panic;
 
 use crate::domain::value_objects::{email::Email, id::Id, password::Password};
 
-#[derive(Debug)]
-struct User {
-    id: Id,
-    email: Email,
-    password: Password,
+#[derive(Debug, Clone)]
+pub struct User {
+    pub id: Id,
+    pub email: Email,
+    pub password: Password,
 }
 
 impl User {

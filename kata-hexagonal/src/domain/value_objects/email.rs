@@ -3,7 +3,7 @@ use std::fmt;
 
 use regex::Regex;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Email {
     email: String,
 }

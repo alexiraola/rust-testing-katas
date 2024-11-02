@@ -2,7 +2,7 @@ use crate::domain::common::uuid::generate_uuid;
 use core::{fmt, panic};
 use regex::Regex;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Id {
     id: String,
 }
