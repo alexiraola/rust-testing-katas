@@ -17,23 +17,32 @@ impl InMemoryUserRepository {
 
 impl UserRepository for InMemoryUserRepository {
     async fn save(&mut self, user: User) -> Result<(), String> {
-        self.users.push(user);
+        if let Some(pos) = self.users.iter().position(|u| *u == user) {
+            self.users[pos] = user;
+        } else {
+            self.users.push(user);
+        }
         Ok(())
     }
-    async fn find_by_id(&self, id: Id) -> Option<crate::domain::entities::user::User> {
-        None
+    async fn find_by_id(&self, id: Id) -> Result<Option<User>, String> {
+        let user = self.users.iter().find(|user| user.is_matching_id(&id));
+
+        Ok(user.cloned())
     }
 
-    async fn find_by_email(&self, email: Email) -> Option<User> {
-        None
+    async fn find_by_email(&self, email: Email) -> Result<Option<User>, String> {
+        let user = self.users.iter().find(|u| u.is_matching_email(&email));
+
+        Ok(user.cloned())
     }
 
-    async fn find_all(&self) -> Vec<User> {
-        self.users.clone()
+    async fn find_all(&self) -> Result<Vec<User>, String> {
+        Ok(self.users.clone())
     }
 
-    async fn remove(&mut self, user: User) {
-        todo!()
+    async fn remove(&mut self, user: User) -> Result<(), String> {
+        self.users.retain(|u| *u != user);
+        Ok(())
     }
 
     // add code here
@@ -52,19 +61,119 @@ mod test {
     #[tokio::test]
     async fn find_user_by_id() {
         let id = Id::generate_unique_identifier();
-        let email = Email::create("test@example.com".to_string());
-        let password = Password::create_from_plaintext("SafePass123_".to_string());
-        let user = User {
-            id,
-            email,
-            password,
-        };
+        let user = create_user_by_id(id.clone());
 
         let mut repo = InMemoryUserRepository::new();
-        repo.save(user).await;
+        let _res = repo.save(user.clone()).await;
+
+        let found_user = repo.find_by_id(id.clone()).await;
+
+        assert_eq!(found_user, Ok(Some(user)));
+    }
+
+    #[tokio::test]
+    async fn find_user_by_email() {
+        let email = Email::create("test@example.com".to_string());
+        let user = create_user_by_email(email.clone());
+
+        let mut repo = InMemoryUserRepository::new();
+        let _res = repo.save(user.clone()).await;
+
+        let found_user = repo.find_by_email(email.clone()).await;
+
+        assert_eq!(found_user, Ok(Some(user)));
+    }
+
+    #[tokio::test]
+    async fn does_not_find_non_existing_user_by_id() {
+        let id = Id::generate_unique_identifier();
+
+        let repo = InMemoryUserRepository::new();
+
+        let found_user = repo.find_by_id(id.clone()).await;
+
+        assert_eq!(found_user, Ok(None));
+    }
+
+    #[tokio::test]
+    async fn does_not_find_non_existing_user_by_email() {
+        let email = Email::create("test@example.com".to_string());
+
+        let repo = InMemoryUserRepository::new();
+
+        let found_user = repo.find_by_email(email.clone()).await;
+
+        assert_eq!(found_user, Ok(None));
+    }
+
+    #[tokio::test]
+    async fn finds_all_users() {
+        let a_user = create_user_by_email(Email::create("test1@example.com".to_string()));
+        let another_user = create_user_by_email(Email::create("test2@example.com".to_string()));
+        let mut repo = InMemoryUserRepository::new();
+
+        let _ = repo.save(a_user.clone()).await;
+        let _ = repo.save(another_user.clone()).await;
 
         let users = repo.find_all().await;
 
-        assert_eq!(users.len(), 1);
+        assert_eq!(users.as_ref().unwrap().len(), 2);
+        assert_eq!(users, Ok(vec![a_user.clone(), another_user.clone()]));
+    }
+
+    #[tokio::test]
+    async fn finds_no_users_when_empty() {
+        let repo = InMemoryUserRepository::new();
+        let users = repo.find_all().await;
+
+        assert_eq!(users.as_ref().unwrap().len(), 0);
+    }
+
+    #[tokio::test]
+    async fn removes_a_user() {
+        let email = Email::create("test@example.com".to_string());
+        let user = create_user_by_email(email.clone());
+        let mut repo = InMemoryUserRepository::new();
+
+        let _ = repo.save(user.clone()).await;
+        let _ = repo.remove(user.clone()).await;
+
+        let found_user = repo.find_by_email(email.clone()).await;
+
+        assert_eq!(found_user, Ok(None));
+    }
+
+    #[tokio::test]
+    async fn update_user_when_exists() {
+        let a_user = create_user_by_email(Email::create("test1@example.com".to_string()));
+        let mut repo = InMemoryUserRepository::new();
+
+        let _ = repo.save(a_user.clone()).await;
+        let _ = repo.save(a_user.clone()).await;
+
+        let users = repo.find_all().await;
+
+        assert_eq!(users.as_ref().unwrap().len(), 1);
+        assert_eq!(users, Ok(vec![a_user.clone()]));
+    }
+
+    fn create_user_by_id(id: Id) -> User {
+        let email = Email::create("test@example.com".to_string());
+        let password = Password::create_from_plaintext("SafePass123_".to_string());
+        User {
+            id,
+            email,
+            password,
+        }
+    }
+
+    fn create_user_by_email(email: Email) -> User {
+        let id = Id::generate_unique_identifier();
+        let password = Password::create_from_plaintext("SafePass123_".to_string());
+        User {
+            id,
+            email,
+            password,
+        }
     }
 }

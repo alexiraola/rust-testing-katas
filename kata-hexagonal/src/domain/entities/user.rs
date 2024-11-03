@@ -24,7 +24,22 @@ impl User {
     pub fn is_matching_password(&self, password: &Password) -> bool {
         self.password == *password
     }
+
+    pub fn is_matching_id(&self, id: &Id) -> bool {
+        self.id == *id
+    }
+
+    pub fn is_matching_email(&self, email: &Email) -> bool {
+        self.email == *email
+    }
 }
+
+impl PartialEq for User {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+impl Eq for User {}
 
 #[cfg(test)]
 mod test {

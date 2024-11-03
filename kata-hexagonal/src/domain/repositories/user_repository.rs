@@ -4,8 +4,8 @@ use crate::domain::value_objects::id::Id;
 
 pub trait UserRepository {
     async fn save(&mut self, user: User) -> Result<(), String>;
-    async fn find_by_id(&self, id: Id) -> Option<User>;
-    async fn find_by_email(&self, email: Email) -> Option<User>;
-    async fn find_all(&self) -> Vec<User>;
-    async fn remove(&mut self, user: User);
+    async fn find_by_id(&self, id: Id) -> Result<Option<User>, String>;
+    async fn find_by_email(&self, email: Email) -> Result<Option<User>, String>;
+    async fn find_all(&self) -> Result<Vec<User>, String>;
+    async fn remove(&mut self, user: User) -> Result<(), String>;
 }
