@@ -1,3 +1,5 @@
+use async_trait::async_trait;
+
 use crate::domain::{
     entities::user::User,
     repositories::user_repository::UserRepository,
@@ -15,6 +17,7 @@ impl InMemoryUserRepository {
     }
 }
 
+#[async_trait]
 impl UserRepository for InMemoryUserRepository {
     async fn save(&mut self, user: User) -> Result<(), String> {
         if let Some(pos) = self.users.iter().position(|u| *u == user) {
@@ -160,20 +163,12 @@ mod test {
     fn create_user_by_id(id: Id) -> User {
         let email = Email::create("test@example.com".to_string());
         let password = Password::create_from_plaintext("SafePass123_".to_string());
-        User {
-            id,
-            email,
-            password,
-        }
+        User::new(id, email, password)
     }
 
     fn create_user_by_email(email: Email) -> User {
         let id = Id::generate_unique_identifier();
         let password = Password::create_from_plaintext("SafePass123_".to_string());
-        User {
-            id,
-            email,
-            password,
-        }
+        User::new(id, email, password)
     }
 }

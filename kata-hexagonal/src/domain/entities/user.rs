@@ -4,12 +4,25 @@ use crate::domain::value_objects::{email::Email, id::Id, password::Password};
 
 #[derive(Debug, Clone)]
 pub struct User {
-    pub id: Id,
-    pub email: Email,
-    pub password: Password,
+    id: Id,
+    email: Email,
+    password: Password,
+}
+
+pub struct UserDto {
+    pub id: String,
+    pub email: String,
 }
 
 impl User {
+    pub fn new(id: Id, email: Email, password: Password) -> Self {
+        User {
+            id,
+            email,
+            password,
+        }
+    }
+
     pub fn change_password(&mut self, new_password: Password) {
         self.ensure_is_different_password(&new_password);
         self.password = new_password;
@@ -31,6 +44,13 @@ impl User {
 
     pub fn is_matching_email(&self, email: &Email) -> bool {
         self.email == *email
+    }
+
+    pub fn to_dto(&self) -> UserDto {
+        UserDto {
+            id: self.id.to_string(),
+            email: self.email.to_string(),
+        }
     }
 }
 
@@ -73,10 +93,6 @@ mod test {
         let email = Email::create("test@example.com".to_string());
         let password = Password::create_from_plaintext("SafePass123_".to_string());
 
-        User {
-            id,
-            email,
-            password,
-        }
+        User::new(id, email, password)
     }
 }
