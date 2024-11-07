@@ -6,6 +6,7 @@ pub struct UserRegisterRequest {
     pub password: String,
 }
 
+#[derive(Debug)]
 pub struct UserRegisterResponse {
     pub id: String,
     pub email: String,

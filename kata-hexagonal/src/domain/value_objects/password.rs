@@ -1,7 +1,52 @@
-use core::{fmt, panic};
+use core::fmt;
+use std::error::Error;
 
 use crate::domain::common::hash;
 use regex::Regex;
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct PasswordError {
+    errors: Vec<PasswordErrorType>,
+}
+
+impl fmt::Display for PasswordError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Password {}",
+            self.errors
+                .iter()
+                .map(|e| e.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
+    }
+}
+
+impl Error for PasswordError {}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum PasswordErrorType {
+    TooShort,
+    MustContainNumber,
+    MustContainLowercase,
+    MustContainUppercase,
+    MustContainUnderscore,
+}
+
+impl fmt::Display for PasswordErrorType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            PasswordErrorType::TooShort => write!(f, "is too short"),
+            PasswordErrorType::MustContainNumber => write!(f, "must contain a number"),
+            PasswordErrorType::MustContainLowercase => write!(f, "must contain a lowercase"),
+            PasswordErrorType::MustContainUppercase => write!(f, "must contain a uppercase"),
+            PasswordErrorType::MustContainUnderscore => write!(f, "must contain an underscore"),
+        }
+    }
+}
+
+impl Error for PasswordErrorType {}
 
 #[derive(Debug, Clone)]
 pub struct Password {
@@ -9,38 +54,42 @@ pub struct Password {
 }
 
 impl Password {
-    pub fn create_from_plaintext(plaintext: String) -> Self {
-        Self::ensure_is_strong_password(&plaintext);
-        Self {
+    pub fn create_from_plaintext(plaintext: String) -> Result<Self, PasswordError> {
+        Self::ensure_is_strong_password(&plaintext)?;
+        Ok(Self {
             password: Self::hash_plaintext(&plaintext),
-        }
+        })
     }
 
     fn hash_plaintext(plaintext: &String) -> String {
         hash::hash(plaintext)
     }
 
-    fn ensure_is_strong_password(plaintext: &String) {
+    fn ensure_is_strong_password(plaintext: &String) -> Result<(), PasswordError> {
         let mut accumulated_errors = vec![];
 
         if !Self::has_six_characters_or_more(plaintext) {
-            accumulated_errors.push("is too short");
+            accumulated_errors.push(PasswordErrorType::TooShort);
         }
         if !Self::contains_number(plaintext) {
-            accumulated_errors.push("must contain a number");
+            accumulated_errors.push(PasswordErrorType::MustContainNumber);
         }
         if !Self::contains_lowercase(plaintext) {
-            accumulated_errors.push("must contain a lowercase");
+            accumulated_errors.push(PasswordErrorType::MustContainLowercase);
         }
         if !Self::contains_uppercase(plaintext) {
-            accumulated_errors.push("must contain an uppercase");
+            accumulated_errors.push(PasswordErrorType::MustContainUppercase);
         }
         if !Self::contains_underscore(plaintext) {
-            accumulated_errors.push("must contain an underscore");
+            accumulated_errors.push(PasswordErrorType::MustContainUnderscore);
         }
 
-        if accumulated_errors.len() > 0 {
-            panic!("Password {}", accumulated_errors.join(", "))
+        if !accumulated_errors.is_empty() {
+            Err(PasswordError {
+                errors: accumulated_errors,
+            })
+        } else {
+            Ok(())
         }
     }
 
@@ -83,55 +132,82 @@ impl Eq for Password {}
 
 #[cfg(test)]
 mod test {
-    use crate::domain::value_objects::password::Password;
+    use crate::domain::value_objects::password::{Password, PasswordError, PasswordErrorType};
     use regex::Regex;
 
     #[test]
     fn creates_correct_password() {
-        Password::create_from_plaintext(String::from("SecurePass123_"));
+        assert!(Password::create_from_plaintext(String::from("SecurePass123_")).is_ok());
     }
 
     #[test]
-    #[should_panic(expected = "Password is too short")]
     fn fails_creating_with_short_password() {
-        Password::create_from_plaintext(String::from("1aA_"));
+        assert_eq!(
+            Password::create_from_plaintext(String::from("1aA_")),
+            Err(PasswordError {
+                errors: vec![PasswordErrorType::TooShort]
+            })
+        );
     }
 
     #[test]
-    #[should_panic(expected = "Password must contain a number")]
     fn fails_creating_when_missing_a_number() {
-        Password::create_from_plaintext(String::from("aaaaaA_"));
+        assert_eq!(
+            Password::create_from_plaintext(String::from("aaaaaA_")),
+            Err(PasswordError {
+                errors: vec![PasswordErrorType::MustContainNumber]
+            })
+        )
     }
 
     #[test]
-    #[should_panic(expected = "Password must contain a lowercase")]
     fn fails_when_missing_lowercase() {
-        Password::create_from_plaintext(String::from("1234A_"));
+        assert_eq!(
+            Password::create_from_plaintext(String::from("1234A_")),
+            Err(PasswordError {
+                errors: vec![PasswordErrorType::MustContainLowercase]
+            })
+        )
     }
 
     #[test]
-    #[should_panic(expected = "Password must contain an uppercase")]
     fn fails_when_missing_uppercase() {
-        Password::create_from_plaintext(String::from("1234a_"));
+        assert_eq!(
+            Password::create_from_plaintext(String::from("1234a_")),
+            Err(PasswordError {
+                errors: vec![PasswordErrorType::MustContainUppercase]
+            })
+        )
     }
 
     #[test]
-    #[should_panic(expected = "Password must contain an underscore")]
     fn fails_when_missing_underscore() {
-        Password::create_from_plaintext(String::from("1234aA"));
+        assert_eq!(
+            Password::create_from_plaintext(String::from("1234aA")),
+            Err(PasswordError {
+                errors: vec![PasswordErrorType::MustContainUnderscore]
+            })
+        )
     }
 
     #[test]
-    #[should_panic(
-        expected = "Password is too short, must contain a number, must contain an uppercase, must contain an underscore"
-    )]
     fn fails_when_missing_several_requirements() {
-        Password::create_from_plaintext(String::from("abc"));
+        assert_eq!(
+            Password::create_from_plaintext(String::from("abc")),
+            Err(PasswordError {
+                errors: vec![
+                    PasswordErrorType::TooShort,
+                    PasswordErrorType::MustContainNumber,
+                    PasswordErrorType::MustContainUppercase,
+                    PasswordErrorType::MustContainUnderscore
+                ]
+            })
+        )
     }
 
     #[test]
     fn ensures_password_is_hashed() {
-        let password = Password::create_from_plaintext(String::from("SecurePass123_"));
+        let password = Password::create_from_plaintext(String::from("SecurePass123_")).unwrap();
         let hashed_value = password.to_string();
 
         let regex = Regex::new(r"[a-f-F0-9]{64}").unwrap();

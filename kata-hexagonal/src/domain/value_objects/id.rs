@@ -1,6 +1,18 @@
 use crate::domain::common::uuid::generate_uuid;
-use core::{fmt, panic};
+use core::fmt;
 use regex::Regex;
+use std::error::Error;
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct InvalidIdError {}
+
+impl fmt::Display for InvalidIdError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Invalid Id format")
+    }
+}
+
+impl Error for InvalidIdError {}
 
 #[derive(Debug, Clone)]
 pub struct Id {
@@ -14,19 +26,21 @@ impl Id {
         }
     }
 
-    pub fn from(id: String) -> Self {
-        Self::ensure_is_valid_id(&id);
-        Id { id }
+    pub fn from(id: String) -> Result<Self, InvalidIdError> {
+        Self::ensure_is_valid_id(&id)?;
+        Ok(Id { id })
     }
 
-    fn ensure_is_valid_id(id: &String) {
+    fn ensure_is_valid_id(id: &String) -> Result<(), InvalidIdError> {
         let uuid_regex = Regex::new(
             r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
         )
         .unwrap();
 
-        if !uuid_regex.is_match(&id) {
-            panic!("Invalid Id format");
+        if !uuid_regex.is_match(id) {
+            Err(InvalidIdError {})
+        } else {
+            Ok(())
         }
     }
 }
@@ -46,7 +60,7 @@ impl Eq for Id {}
 
 #[cfg(test)]
 mod test {
-    use crate::domain::value_objects::id::Id;
+    use crate::domain::value_objects::id::{Id, InvalidIdError};
     use regex::Regex;
 
     #[test]
@@ -64,13 +78,12 @@ mod test {
         let uuid = "3e1f1e36-ecb3-42bd-9f6b-a4d6d0835495".to_string();
         let id = Id::from(uuid.clone());
 
-        assert_eq!(id.to_string(), uuid);
+        assert_eq!(id.unwrap().to_string(), uuid);
     }
 
     #[test]
-    #[should_panic(expected = "Invalid Id format")]
     fn does_not_allow_to_create_from_invalid_identifier() {
-        Id::from("invalid-id".to_string());
+        assert_eq!(Id::from("invalid-id".to_string()), Err(InvalidIdError {}));
     }
 
     #[test]
