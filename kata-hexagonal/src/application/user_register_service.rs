@@ -3,11 +3,7 @@ use std::{error::Error, fmt::Display};
 use crate::domain::{
     entities::user::User,
     repositories::user_repository::UserRepository,
-    value_objects::{
-        email::{Email, EmailError},
-        id::Id,
-        password::Password,
-    },
+    value_objects::{email::Email, id::Id, password::Password},
 };
 
 use super::dtos::{UserRegisterRequest, UserRegisterResponse};
@@ -55,7 +51,7 @@ impl<'a> UserRegisterService<'a> {
             .await;
 
         if let Ok(Some(_)) = user_found {
-            Err(Box::new(EmailError::InvalidFormat))
+            Err(Box::new(ExistingUserError {}))
         } else {
             Ok(())
         }
@@ -72,7 +68,6 @@ impl<'a> UserRegisterService<'a> {
 #[cfg(test)]
 mod test {
     use crate::{
-        application::user_register_service::ExistingUserError,
         domain::{repositories::user_repository::UserRepository, value_objects::email::Email},
         infrastructure::in_memory_user_repository::InMemoryUserRepository,
     };

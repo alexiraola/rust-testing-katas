@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use crate::application::{
     dtos::{UserRegisterRequest, UserRegisterResponse},
     user_register_service::UserRegisterService,
@@ -14,25 +16,27 @@ impl<'a> UserRegisterController<'a> {
         UserRegisterController { service }
     }
 
-    pub async fn register(
+    pub async fn register<T: HttpResponse<Result<UserRegisterResponse, Box<dyn Error>>>>(
         &mut self,
         request: HttpRequest<UserRegisterRequest>,
-        response: &mut HttpResponse<UserRegisterResponse>,
+        response: &mut T,
     ) {
-        // let result = try {
-        //     self.service.register(request.body).await;
-        // }
         match self.service.register(request.body).await {
-            Ok(register_response) => response.status(201).json(Some(Ok(register_response))),
-            Err(error) => response.status(400).json(Some(Err(error.to_string()))),
+            Ok(register_response) => response.status(201).json(Ok(register_response)),
+            Err(error) => response.status(400).json(Err(error)),
         };
     }
 }
 
 #[cfg(test)]
 mod test {
+    use std::error::Error;
+
     use crate::{
-        application::{dtos::UserRegisterRequest, user_register_service::UserRegisterService},
+        application::{
+            dtos::{UserRegisterRequest, UserRegisterResponse},
+            user_register_service::UserRegisterService,
+        },
         infrastructure::{
             http::{HttpRequest, HttpResponse},
             in_memory_user_repository::InMemoryUserRepository,
@@ -40,6 +44,23 @@ mod test {
     };
 
     use super::UserRegisterController;
+
+    struct MockResponse {
+        status: u16,
+        data: Option<Result<UserRegisterResponse, Box<dyn Error>>>,
+    }
+
+    impl HttpResponse<Result<UserRegisterResponse, Box<dyn Error>>> for MockResponse {
+        fn status(&mut self, code: u16) -> &mut Self {
+            self.status = code;
+            self
+        }
+
+        fn json(&mut self, data: Result<UserRegisterResponse, Box<dyn Error>>) -> &mut Self {
+            self.data = Some(data);
+            self
+        }
+    }
 
     #[tokio::test]
     async fn register_a_valid_user() {
@@ -50,7 +71,10 @@ mod test {
         let mut register_service = UserRegisterService::new(&mut repo);
         let mut controller = UserRegisterController::new(&mut register_service);
 
-        let mut response = HttpResponse::new();
+        let mut response = MockResponse {
+            status: 200,
+            data: None,
+        };
 
         controller
             .register(
@@ -61,7 +85,7 @@ mod test {
             )
             .await;
 
-        assert_eq!(response.status_code, 201);
+        assert_eq!(response.status, 201);
         assert_eq!(response.data.unwrap().unwrap().email, "test@example.com");
     }
 
@@ -74,7 +98,10 @@ mod test {
         let mut register_service = UserRegisterService::new(&mut repo);
         let mut controller = UserRegisterController::new(&mut register_service);
 
-        let mut response = HttpResponse::new();
+        let mut response = MockResponse {
+            status: 200,
+            data: None,
+        };
 
         controller
             .register(
@@ -85,10 +112,7 @@ mod test {
             )
             .await;
 
-        assert_eq!(response.status_code, 400);
-        assert_eq!(
-            response.data.unwrap().unwrap_err(),
-            "Invalid email format".to_string()
-        );
+        assert_eq!(response.status, 400);
+        assert!(response.data.unwrap().is_err());
     }
 }

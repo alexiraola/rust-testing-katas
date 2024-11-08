@@ -2,10 +2,11 @@ mod application;
 mod domain;
 mod infrastructure;
 
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, middleware, post, web, App, HttpResponse, HttpServer, Responder};
 use application::{dtos::UserRegisterRequest, user_register_service::UserRegisterService};
 use infrastructure::{
-    http::HttpRequest, in_memory_user_repository::InMemoryUserRepository,
+    actix::response::ActixHttpResponse, http::HttpRequest,
+    in_memory_user_repository::InMemoryUserRepository,
     user_register_controller::UserRegisterController,
 };
 use serde::Deserialize;
@@ -32,24 +33,26 @@ async fn register(form: web::Json<FormData>) -> impl Responder {
             password: form.password.clone(),
         },
     };
-    let mut response = infrastructure::http::HttpResponse::new();
+    let mut response = ActixHttpResponse::new();
 
     controller.register(request, &mut response).await;
 
-    if let Some(data) = response.data {
-        match data {
-            Ok(d) => HttpResponse::Created().json(format!("id: {}, email: {}", d.id, d.email)),
-            Err(error) => HttpResponse::NotFound().json(error.to_string()),
-        }
-    } else {
-        HttpResponse::NotFound().json("Not found".to_string())
-    }
+    response.response()
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().service(hello).service(register))
-        .bind(("127.0.0.1", 8080))?
-        .run()
-        .await
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+
+    log::info!("starting HTTP server at http://localhost:8080");
+
+    HttpServer::new(|| {
+        App::new()
+            .wrap(middleware::Logger::default())
+            .service(hello)
+            .service(register)
+    })
+    .bind(("127.0.0.1", 8080))?
+    .run()
+    .await
 }
