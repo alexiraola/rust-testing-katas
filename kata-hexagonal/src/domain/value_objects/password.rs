@@ -25,16 +25,12 @@ pub enum PasswordErrorType {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Password {
-    password: String,
-}
+pub struct Password(String);
 
 impl Password {
     pub fn new(plaintext: String) -> Result<Self, PasswordError> {
         Self::ensure_is_strong_password(&plaintext)?;
-        Ok(Self {
-            password: Self::hash_plaintext(&plaintext),
-        })
+        Ok(Self(Self::hash_plaintext(&plaintext)))
     }
 
     fn hash_plaintext(plaintext: &str) -> String {
@@ -95,7 +91,7 @@ impl Password {
 
 impl fmt::Display for Password {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.password)
+        write!(f, "{}", self.0)
     }
 }
 
