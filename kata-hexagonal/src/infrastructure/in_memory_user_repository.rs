@@ -1,3 +1,5 @@
+use std::sync::Mutex;
+
 use async_trait::async_trait;
 
 use crate::domain::{
@@ -8,43 +10,65 @@ use crate::domain::{
 
 #[derive(Debug)]
 pub struct InMemoryUserRepository {
-    users: Vec<User>,
+    users: Mutex<Vec<User>>,
 }
 
 impl InMemoryUserRepository {
     pub fn new() -> Self {
-        InMemoryUserRepository { users: Vec::new() }
+        InMemoryUserRepository {
+            users: Mutex::new(Vec::new()),
+        }
     }
 }
 
 #[async_trait]
 impl UserRepository for InMemoryUserRepository {
-    async fn save(&mut self, user: User) -> Result<(), String> {
-        if let Some(pos) = self.users.iter().position(|u| *u == user) {
-            self.users[pos] = user;
-        } else {
-            self.users.push(user);
+    async fn save(&self, user: User) -> Result<(), String> {
+        if let Ok(mut lock) = self.users.lock() {
+            if let Some(pos) = lock.iter().position(|u| *u == user) {
+                lock[pos] = user;
+            } else {
+                lock.push(user);
+            }
         }
         Ok(())
     }
     async fn find_by_id(&self, id: Id) -> Result<Option<User>, String> {
-        let user = self.users.iter().find(|user| user.is_matching_id(&id));
+        let users = match self.users.lock() {
+            Ok(lock) => lock,
+            _ => return Err("Could not unlock".to_string()),
+        };
+
+        let user = users.iter().find(|user| user.is_matching_id(&id));
 
         Ok(user.cloned())
     }
 
     async fn find_by_email(&self, email: Email) -> Result<Option<User>, String> {
-        let user = self.users.iter().find(|u| u.is_matching_email(&email));
+        let users = match self.users.lock() {
+            Ok(lock) => lock,
+            _ => return Err("Could not unlock".to_string()),
+        };
+
+        let user = users.iter().find(|u| u.is_matching_email(&email));
 
         Ok(user.cloned())
     }
 
     async fn find_all(&self) -> Result<Vec<User>, String> {
-        Ok(self.users.clone())
+        let users = match self.users.lock() {
+            Ok(lock) => lock,
+            _ => return Err("Could not unlock".to_string()),
+        };
+        Ok(users.clone())
     }
 
-    async fn remove(&mut self, user: User) -> Result<(), String> {
-        self.users.retain(|u| *u != user);
+    async fn remove(&self, user: User) -> Result<(), String> {
+        let mut users = match self.users.lock() {
+            Ok(lock) => lock,
+            _ => return Err("Could not unlock".to_string()),
+        };
+        users.retain(|u| *u != user);
         Ok(())
     }
 

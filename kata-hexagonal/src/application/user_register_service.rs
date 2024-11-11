@@ -1,4 +1,4 @@
-use std::{error::Error, fmt::Display};
+use std::{error::Error, fmt::Display, sync::Arc};
 
 use crate::domain::{
     entities::user::User,
@@ -19,17 +19,17 @@ impl Display for ExistingUserError {
 
 impl Error for ExistingUserError {}
 
-pub struct UserRegisterService<'a> {
-    user_repository: &'a mut dyn UserRepository,
+pub struct UserRegisterService {
+    user_repository: Arc<dyn UserRepository>,
 }
 
-impl<'a> UserRegisterService<'a> {
-    pub fn new(user_repository: &'a mut dyn UserRepository) -> Self {
+impl UserRegisterService {
+    pub fn new(user_repository: Arc<dyn UserRepository>) -> Self {
         UserRegisterService { user_repository }
     }
 
     pub async fn register(
-        &mut self,
+        &self,
         request: UserRegisterRequest,
     ) -> Result<UserRegisterResponse, Box<dyn Error>> {
         self.ensure_user_does_not_exist(&request).await?;
@@ -42,7 +42,7 @@ impl<'a> UserRegisterService<'a> {
     }
 
     async fn ensure_user_does_not_exist(
-        &mut self,
+        &self,
         request: &UserRegisterRequest,
     ) -> Result<(), Box<dyn Error>> {
         let user_found = self
@@ -72,14 +72,16 @@ mod test {
         infrastructure::in_memory_user_repository::InMemoryUserRepository,
     };
 
+    use std::sync::Arc;
+
     use super::{UserRegisterRequest, UserRegisterService};
 
     #[tokio::test]
     async fn register_with_valid_credentials() {
         let register_request = create_register_request();
 
-        let mut repo = InMemoryUserRepository::new();
-        let mut register_service = UserRegisterService::new(&mut repo);
+        let repo = Arc::new(InMemoryUserRepository::new());
+        let mut register_service = UserRegisterService::new(repo.clone());
 
         let _ = register_service.register(register_request).await;
 
@@ -97,8 +99,8 @@ mod test {
     async fn does_not_allow_to_register_existing_email() {
         let register_request = create_register_request();
 
-        let mut repo = InMemoryUserRepository::new();
-        let mut register_service = UserRegisterService::new(&mut repo);
+        let repo = Arc::new(InMemoryUserRepository::new());
+        let mut register_service = UserRegisterService::new(repo.clone());
 
         let _ = register_service.register(register_request.clone()).await;
         let res = register_service.register(register_request.clone()).await;

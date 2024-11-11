@@ -2,7 +2,13 @@ mod application;
 mod domain;
 mod infrastructure;
 
-use actix_web::{get, middleware, post, web, App, HttpResponse, HttpServer, Responder};
+use std::sync::Mutex;
+
+use actix_web::{
+    get, middleware, post,
+    web::{self, Data},
+    App, HttpResponse, HttpServer, Responder,
+};
 use application::{dtos::UserRegisterRequest, user_register_service::UserRegisterService};
 use infrastructure::{
     actix::response::ActixHttpResponse, http::HttpRequest,
@@ -23,10 +29,9 @@ async fn hello() -> impl Responder {
 }
 
 #[post("/register")]
-async fn register(form: web::Json<FormData>) -> impl Responder {
-    let mut repo = InMemoryUserRepository::new();
-    let mut service = UserRegisterService::new(&mut repo);
-    let mut controller = UserRegisterController::new(&mut service);
+async fn register(repo: Data<InMemoryUserRepository>, form: web::Json<FormData>) -> impl Responder {
+    let mut service = UserRegisterService::new(repo.into_inner());
+    let mut controller = UserRegisterController::new(service);
     let request = HttpRequest {
         body: UserRegisterRequest {
             email: form.email.clone(),
@@ -46,8 +51,11 @@ async fn main() -> std::io::Result<()> {
 
     log::info!("starting HTTP server at http://localhost:8080");
 
-    HttpServer::new(|| {
+    let repo = Data::new(InMemoryUserRepository::new());
+
+    HttpServer::new(move || {
         App::new()
+            .app_data(repo.clone())
             .wrap(middleware::Logger::default())
             .service(hello)
             .service(register)

@@ -7,12 +7,12 @@ use crate::application::{
 
 use super::http::{HttpRequest, HttpResponse};
 
-pub struct UserRegisterController<'a> {
-    service: &'a mut UserRegisterService<'a>,
+pub struct UserRegisterController {
+    service: UserRegisterService,
 }
 
-impl<'a> UserRegisterController<'a> {
-    pub fn new(service: &'a mut UserRegisterService<'a>) -> Self {
+impl UserRegisterController {
+    pub fn new(service: UserRegisterService) -> Self {
         UserRegisterController { service }
     }
 
@@ -31,6 +31,7 @@ impl<'a> UserRegisterController<'a> {
 #[cfg(test)]
 mod test {
     use std::error::Error;
+    use std::sync::Arc;
 
     use crate::{
         application::{
@@ -67,9 +68,9 @@ mod test {
         let email = "test@example.com".to_string();
         let password = "SecurePass123_".to_string();
 
-        let mut repo = InMemoryUserRepository::new();
-        let mut register_service = UserRegisterService::new(&mut repo);
-        let mut controller = UserRegisterController::new(&mut register_service);
+        let mut repo = Arc::new(InMemoryUserRepository::new());
+        let mut register_service = UserRegisterService::new(repo.clone());
+        let mut controller = UserRegisterController::new(register_service);
 
         let mut response = MockResponse {
             status: 200,
@@ -94,9 +95,9 @@ mod test {
         let email = "test@examplecom".to_string();
         let password = "SecurePass123_".to_string();
 
-        let mut repo = InMemoryUserRepository::new();
-        let mut register_service = UserRegisterService::new(&mut repo);
-        let mut controller = UserRegisterController::new(&mut register_service);
+        let mut repo = Arc::new(InMemoryUserRepository::new());
+        let mut register_service = UserRegisterService::new(repo.clone());
+        let mut controller = UserRegisterController::new(register_service);
 
         let mut response = MockResponse {
             status: 200,
