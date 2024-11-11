@@ -90,7 +90,7 @@ mod test {
         let id = Id::generate_unique_identifier();
         let user = create_user_by_id(id.clone());
 
-        let mut repo = InMemoryUserRepository::new();
+        let repo = InMemoryUserRepository::new();
         let _res = repo.save(user.clone()).await;
 
         let found_user = repo.find_by_id(id.clone()).await;
@@ -103,7 +103,7 @@ mod test {
         let email = Email::new("test@example.com".to_string()).unwrap();
         let user = create_user_by_email(email.clone());
 
-        let mut repo = InMemoryUserRepository::new();
+        let repo = InMemoryUserRepository::new();
         let _res = repo.save(user.clone()).await;
 
         let found_user = repo.find_by_email(email.clone()).await;
@@ -138,7 +138,7 @@ mod test {
         let a_user = create_user_by_email(Email::new("test1@example.com".to_string()).unwrap());
         let another_user =
             create_user_by_email(Email::new("test2@example.com".to_string()).unwrap());
-        let mut repo = InMemoryUserRepository::new();
+        let repo = InMemoryUserRepository::new();
 
         let _ = repo.save(a_user.clone()).await;
         let _ = repo.save(another_user.clone()).await;
@@ -161,7 +161,7 @@ mod test {
     async fn removes_a_user() {
         let email = Email::new("test@example.com".to_string()).unwrap();
         let user = create_user_by_email(email.clone());
-        let mut repo = InMemoryUserRepository::new();
+        let repo = InMemoryUserRepository::new();
 
         let _ = repo.save(user.clone()).await;
         let _ = repo.remove(user.clone()).await;
@@ -174,7 +174,7 @@ mod test {
     #[tokio::test]
     async fn update_user_when_exists() {
         let a_user = create_user_by_email(Email::new("test1@example.com".to_string()).unwrap());
-        let mut repo = InMemoryUserRepository::new();
+        let repo = InMemoryUserRepository::new();
 
         let _ = repo.save(a_user.clone()).await;
         let _ = repo.save(a_user.clone()).await;

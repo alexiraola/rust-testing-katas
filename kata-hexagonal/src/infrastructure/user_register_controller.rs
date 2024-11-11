@@ -68,8 +68,8 @@ mod test {
         let email = "test@example.com".to_string();
         let password = "SecurePass123_".to_string();
 
-        let mut repo = Arc::new(InMemoryUserRepository::new());
-        let mut register_service = UserRegisterService::new(repo.clone());
+        let repo = Arc::new(InMemoryUserRepository::new());
+        let register_service = UserRegisterService::new(repo.clone());
         let mut controller = UserRegisterController::new(register_service);
 
         let mut response = MockResponse {
@@ -95,8 +95,8 @@ mod test {
         let email = "test@examplecom".to_string();
         let password = "SecurePass123_".to_string();
 
-        let mut repo = Arc::new(InMemoryUserRepository::new());
-        let mut register_service = UserRegisterService::new(repo.clone());
+        let repo = Arc::new(InMemoryUserRepository::new());
+        let register_service = UserRegisterService::new(repo.clone());
         let mut controller = UserRegisterController::new(register_service);
 
         let mut response = MockResponse {

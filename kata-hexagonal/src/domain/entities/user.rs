@@ -1,17 +1,8 @@
-use std::{error::Error, fmt::Display};
-
 use crate::domain::value_objects::{email::Email, id::Id, password::Password};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(thiserror::Error, Debug, PartialEq, Eq)]
+#[error("New password must be different")]
 pub struct EqualPasswordError {}
-
-impl Display for EqualPasswordError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "New password must be different")
-    }
-}
-
-impl Error for EqualPasswordError {}
 
 #[derive(Debug, Clone)]
 pub struct User {

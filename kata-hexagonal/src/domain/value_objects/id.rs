@@ -1,18 +1,10 @@
 use crate::domain::common::uuid::generate_uuid;
 use core::fmt;
 use regex::Regex;
-use std::error::Error;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(thiserror::Error, Debug, PartialEq, Eq)]
+#[error("Invalid Id format")]
 pub struct InvalidIdError {}
-
-impl fmt::Display for InvalidIdError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Invalid Id format")
-    }
-}
-
-impl Error for InvalidIdError {}
 
 #[derive(Debug, Clone)]
 pub struct Id {
@@ -42,6 +34,14 @@ impl Id {
         } else {
             Ok(())
         }
+    }
+}
+
+impl TryFrom<String> for Id {
+    type Error = InvalidIdError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::from(value)
     }
 }
 

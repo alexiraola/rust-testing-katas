@@ -2,8 +2,6 @@ mod application;
 mod domain;
 mod infrastructure;
 
-use std::sync::Mutex;
-
 use actix_web::{
     get, middleware, post,
     web::{self, Data},
@@ -30,7 +28,7 @@ async fn hello() -> impl Responder {
 
 #[post("/register")]
 async fn register(repo: Data<InMemoryUserRepository>, form: web::Json<FormData>) -> impl Responder {
-    let mut service = UserRegisterService::new(repo.into_inner());
+    let service = UserRegisterService::new(repo.into_inner());
     let mut controller = UserRegisterController::new(service);
     let request = HttpRequest {
         body: UserRegisterRequest {
