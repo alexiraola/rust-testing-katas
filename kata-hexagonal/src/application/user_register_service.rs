@@ -1,4 +1,4 @@
-use std::{error::Error, fmt::Display, sync::Arc};
+use std::{error::Error, sync::Arc};
 
 use crate::domain::{
     entities::user::User,
@@ -8,16 +8,9 @@ use crate::domain::{
 
 use super::dtos::{UserRegisterRequest, UserRegisterResponse};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(thiserror::Error, Debug, PartialEq, Eq)]
+#[error("User already exists with this email")]
 pub struct ExistingUserError {}
-
-impl Display for ExistingUserError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "User already exists with this email")
-    }
-}
-
-impl Error for ExistingUserError {}
 
 pub struct UserRegisterService {
     user_repository: Arc<dyn UserRepository>,
@@ -60,7 +53,7 @@ impl UserRegisterService {
     fn create_user(&self, request: UserRegisterRequest) -> Result<User, Box<dyn Error>> {
         let id = Id::generate_unique_identifier();
         let email = Email::new(request.email)?;
-        let password = Password::create_from_plaintext(request.password)?;
+        let password = Password::new(request.password)?;
         Ok(User::new(id, email, password))
     }
 }

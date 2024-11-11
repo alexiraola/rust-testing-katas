@@ -91,13 +91,11 @@ mod test {
     fn changes_password_when_different_provided() {
         let mut user = create_user();
 
-        let _ = user.change_password(
-            Password::create_from_plaintext("AnotherSafePass123_".to_string()).unwrap(),
-        );
+        let _ = user.change_password(Password::new("AnotherSafePass123_".to_string()).unwrap());
 
-        assert!(user.is_matching_password(
-            &Password::create_from_plaintext("AnotherSafePass123_".to_string()).unwrap()
-        ))
+        assert!(
+            user.is_matching_password(&Password::new("AnotherSafePass123_".to_string()).unwrap())
+        )
     }
 
     #[test]
@@ -105,9 +103,7 @@ mod test {
         let mut user = create_user();
 
         assert_eq!(
-            user.change_password(
-                Password::create_from_plaintext("SafePass123_".to_string()).unwrap()
-            ),
+            user.change_password(Password::new("SafePass123_".to_string()).unwrap()),
             Err(EqualPasswordError {})
         );
     }
@@ -115,7 +111,7 @@ mod test {
     fn create_user() -> User {
         let id = Id::generate_unique_identifier();
         let email = Email::new("test@example.com".to_string()).unwrap();
-        let password = Password::create_from_plaintext("SafePass123_".to_string()).unwrap();
+        let password = Password::new("SafePass123_".to_string()).unwrap();
 
         User::new(id, email, password)
     }

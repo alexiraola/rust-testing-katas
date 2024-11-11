@@ -187,13 +187,13 @@ mod test {
 
     fn create_user_by_id(id: Id) -> User {
         let email = Email::new("test@example.com".to_string()).unwrap();
-        let password = Password::create_from_plaintext("SafePass123_".to_string()).unwrap();
+        let password = Password::new("SafePass123_".to_string()).unwrap();
         User::new(id, email, password)
     }
 
     fn create_user_by_email(email: Email) -> User {
         let id = Id::generate_unique_identifier();
-        let password = Password::create_from_plaintext("SafePass123_".to_string()).unwrap();
+        let password = Password::new("SafePass123_".to_string()).unwrap();
         User::new(id, email, password)
     }
 }
