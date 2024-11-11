@@ -1,31 +1,20 @@
-use std::{error::Error, fmt};
-
 use regex::Regex;
+use std::fmt;
+use thiserror::Error;
 
-#[derive(Debug, Clone)]
-pub struct Email {
-    email: String,
-}
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Email(String);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Error, Debug, Clone, PartialEq)]
 pub enum EmailError {
+    #[error("Invalid email format")]
     InvalidFormat,
 }
 
-impl fmt::Display for EmailError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            EmailError::InvalidFormat => write!(f, "Invalid email format"),
-        }
-    }
-}
-
-impl Error for EmailError {}
-
 impl Email {
-    pub fn create(address: String) -> Result<Self, EmailError> {
+    pub fn new(address: String) -> Result<Self, EmailError> {
         Self::ensure_is_valid_email(&address)?;
-        Ok(Self { email: address })
+        Ok(Self(address))
     }
 
     fn ensure_is_valid_email(address: &str) -> Result<(), EmailError> {
@@ -37,18 +26,19 @@ impl Email {
     }
 }
 
-impl fmt::Display for Email {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.email)
+impl TryFrom<String> for Email {
+    type Error = EmailError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Email::new(value)
     }
 }
 
-impl PartialEq for Email {
-    fn eq(&self, other: &Self) -> bool {
-        self.email == other.email
+impl fmt::Display for Email {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
-impl Eq for Email {}
 
 #[cfg(test)]
 mod test {
@@ -56,7 +46,7 @@ mod test {
 
     #[test]
     fn create_email_with_correct_format() {
-        let email = Email::create(String::from("example@example.com"));
+        let email = Email::new(String::from("example@example.com"));
         assert_eq!(
             email.unwrap().to_string(),
             String::from("example@example.com")
@@ -65,23 +55,23 @@ mod test {
 
     #[test]
     fn fails_creating_with_invalid_format() {
-        let email = Email::create("invalid".to_string());
+        let email = Email::new("invalid".to_string());
         assert_eq!(email.unwrap_err(), EmailError::InvalidFormat);
     }
 
     #[test]
     fn two_emails_with_same_address_should_be_equal() {
         assert_eq!(
-            Email::create("test@example.com".to_string()).unwrap(),
-            Email::create("test@example.com".to_string()).unwrap()
+            Email::new("test@example.com".to_string()).unwrap(),
+            Email::new("test@example.com".to_string()).unwrap()
         );
     }
 
     #[test]
     fn two_emails_with_different_address_should_not_be_equal() {
         assert_ne!(
-            Email::create("tes@example.com".to_string()).unwrap(),
-            Email::create("test@example.com".to_string()).unwrap()
+            Email::new("tes@example.com".to_string()).unwrap(),
+            Email::new("test@example.com".to_string()).unwrap()
         );
     }
 }

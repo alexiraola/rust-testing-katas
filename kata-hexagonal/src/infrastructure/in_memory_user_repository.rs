@@ -100,7 +100,7 @@ mod test {
 
     #[tokio::test]
     async fn find_user_by_email() {
-        let email = Email::create("test@example.com".to_string()).unwrap();
+        let email = Email::new("test@example.com".to_string()).unwrap();
         let user = create_user_by_email(email.clone());
 
         let mut repo = InMemoryUserRepository::new();
@@ -124,7 +124,7 @@ mod test {
 
     #[tokio::test]
     async fn does_not_find_non_existing_user_by_email() {
-        let email = Email::create("test@example.com".to_string()).unwrap();
+        let email = Email::new("test@example.com".to_string()).unwrap();
 
         let repo = InMemoryUserRepository::new();
 
@@ -135,9 +135,9 @@ mod test {
 
     #[tokio::test]
     async fn finds_all_users() {
-        let a_user = create_user_by_email(Email::create("test1@example.com".to_string()).unwrap());
+        let a_user = create_user_by_email(Email::new("test1@example.com".to_string()).unwrap());
         let another_user =
-            create_user_by_email(Email::create("test2@example.com".to_string()).unwrap());
+            create_user_by_email(Email::new("test2@example.com".to_string()).unwrap());
         let mut repo = InMemoryUserRepository::new();
 
         let _ = repo.save(a_user.clone()).await;
@@ -159,7 +159,7 @@ mod test {
 
     #[tokio::test]
     async fn removes_a_user() {
-        let email = Email::create("test@example.com".to_string()).unwrap();
+        let email = Email::new("test@example.com".to_string()).unwrap();
         let user = create_user_by_email(email.clone());
         let mut repo = InMemoryUserRepository::new();
 
@@ -173,7 +173,7 @@ mod test {
 
     #[tokio::test]
     async fn update_user_when_exists() {
-        let a_user = create_user_by_email(Email::create("test1@example.com".to_string()).unwrap());
+        let a_user = create_user_by_email(Email::new("test1@example.com".to_string()).unwrap());
         let mut repo = InMemoryUserRepository::new();
 
         let _ = repo.save(a_user.clone()).await;
@@ -186,7 +186,7 @@ mod test {
     }
 
     fn create_user_by_id(id: Id) -> User {
-        let email = Email::create("test@example.com".to_string()).unwrap();
+        let email = Email::new("test@example.com".to_string()).unwrap();
         let password = Password::create_from_plaintext("SafePass123_".to_string()).unwrap();
         User::new(id, email, password)
     }

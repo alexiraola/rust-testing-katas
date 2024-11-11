@@ -114,7 +114,7 @@ mod test {
 
     fn create_user() -> User {
         let id = Id::generate_unique_identifier();
-        let email = Email::create("test@example.com".to_string()).unwrap();
+        let email = Email::new("test@example.com".to_string()).unwrap();
         let password = Password::create_from_plaintext("SafePass123_".to_string()).unwrap();
 
         User::new(id, email, password)

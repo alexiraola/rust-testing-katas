@@ -47,7 +47,7 @@ impl UserRegisterService {
     ) -> Result<(), Box<dyn Error>> {
         let user_found = self
             .user_repository
-            .find_by_email(Email::create(request.email.clone())?)
+            .find_by_email(Email::new(request.email.clone())?)
             .await;
 
         if let Ok(Some(_)) = user_found {
@@ -59,7 +59,7 @@ impl UserRegisterService {
 
     fn create_user(&self, request: UserRegisterRequest) -> Result<User, Box<dyn Error>> {
         let id = Id::generate_unique_identifier();
-        let email = Email::create(request.email)?;
+        let email = Email::new(request.email)?;
         let password = Password::create_from_plaintext(request.password)?;
         Ok(User::new(id, email, password))
     }
@@ -86,13 +86,13 @@ mod test {
         let _ = register_service.register(register_request).await;
 
         let user = repo
-            .find_by_email(Email::create("test@example.com".to_string()).unwrap())
+            .find_by_email(Email::new("test@example.com".to_string()).unwrap())
             .await;
 
         assert!(user
             .unwrap()
             .unwrap()
-            .is_matching_email(&Email::create("test@example.com".to_string()).unwrap()))
+            .is_matching_email(&Email::new("test@example.com".to_string()).unwrap()))
     }
 
     #[tokio::test]
