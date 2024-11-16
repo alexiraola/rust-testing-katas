@@ -91,7 +91,7 @@ mod test {
     }
 
     #[tokio::test]
-    async fn rejects_when_email_not_provided() {
+    async fn rejects_when_invalid_email_provided() {
         let email = "test@examplecom".to_string();
         let password = "SecurePass123_".to_string();
 
