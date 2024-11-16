@@ -74,7 +74,7 @@ mod test {
         let register_request = create_register_request();
 
         let repo = Arc::new(InMemoryUserRepository::new());
-        let mut register_service = UserRegisterService::new(repo.clone());
+        let register_service = UserRegisterService::new(repo.clone());
 
         let _ = register_service.register(register_request).await;
 
@@ -93,7 +93,7 @@ mod test {
         let register_request = create_register_request();
 
         let repo = Arc::new(InMemoryUserRepository::new());
-        let mut register_service = UserRegisterService::new(repo.clone());
+        let register_service = UserRegisterService::new(repo.clone());
 
         let _ = register_service.register(register_request.clone()).await;
         let res = register_service.register(register_request.clone()).await;

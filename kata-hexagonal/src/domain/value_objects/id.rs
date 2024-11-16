@@ -23,7 +23,7 @@ impl Id {
         Ok(Id { id })
     }
 
-    fn ensure_is_valid_id(id: &String) -> Result<(), InvalidIdError> {
+    fn ensure_is_valid_id(id: &str) -> Result<(), InvalidIdError> {
         let uuid_regex = Regex::new(
             r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
         )

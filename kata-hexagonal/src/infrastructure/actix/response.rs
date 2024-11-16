@@ -25,7 +25,7 @@ impl ActixHttpResponse {
             }
             (Some(status), Some(Err(error))) => HttpResponse::build(status).json(error.to_string()),
             (Some(status), None) => HttpResponse::new(status),
-            other => HttpResponse::InternalServerError().body("Unknown error".to_string()),
+            _other => HttpResponse::InternalServerError().body("Unknown error".to_string()),
         }
     }
 }
