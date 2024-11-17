@@ -6,10 +6,15 @@ use actix_web::{
 use serde::Deserialize;
 
 use crate::{
-    application::{dtos::UserRegisterRequest, user_register_service::UserRegisterService},
+    application::{
+        dtos::{UserLoginRequest, UserRegisterRequest},
+        user_login_service::UserLoginService,
+        user_register_service::UserRegisterService,
+    },
     infrastructure::{
         actix::response::ActixHttpResponse, http::HttpRequest,
         in_memory_user_repository::InMemoryUserRepository,
+        user_login_controller::UserLoginController,
         user_register_controller::UserRegisterController,
     },
 };
@@ -28,7 +33,7 @@ async fn hello() -> impl Responder {
 #[post("/register")]
 async fn register(repo: Data<InMemoryUserRepository>, form: web::Json<FormData>) -> impl Responder {
     let service = UserRegisterService::new(repo.into_inner());
-    let mut controller = UserRegisterController::new(service);
+    let controller = UserRegisterController::new(service);
     let request = HttpRequest {
         body: UserRegisterRequest {
             email: form.email.clone(),
@@ -38,6 +43,23 @@ async fn register(repo: Data<InMemoryUserRepository>, form: web::Json<FormData>)
     let mut response = ActixHttpResponse::new();
 
     controller.register(request, &mut response).await;
+
+    response.response()
+}
+
+#[post("/login")]
+async fn login(repo: Data<InMemoryUserRepository>, form: web::Json<FormData>) -> impl Responder {
+    let service = UserLoginService::new(repo.into_inner());
+    let controller = UserLoginController::new(service);
+    let request = HttpRequest {
+        body: UserLoginRequest {
+            email: form.email.clone(),
+            password: form.password.clone(),
+        },
+    };
+    let mut response = ActixHttpResponse::new();
+
+    controller.login(request, &mut response).await;
 
     response.response()
 }
@@ -55,6 +77,7 @@ pub async fn create_server(host: &str, port: u16) -> std::io::Result<()> {
             .wrap(middleware::Logger::default())
             .service(hello)
             .service(register)
+            .service(login)
     })
     .bind((host, port))?
     .run()

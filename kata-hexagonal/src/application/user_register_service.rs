@@ -31,7 +31,7 @@ impl UserRegisterService {
 
         self.user_repository.save(user).await?;
 
-        Ok(UserRegisterResponse::from(dto))
+        Ok(dto.into())
     }
 
     async fn ensure_user_does_not_exist(

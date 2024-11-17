@@ -17,7 +17,7 @@ impl UserRegisterController {
     }
 
     pub async fn register<T: HttpResponse<Result<UserRegisterResponse, Box<dyn Error>>>>(
-        &mut self,
+        &self,
         request: HttpRequest<UserRegisterRequest>,
         response: &mut T,
     ) {
