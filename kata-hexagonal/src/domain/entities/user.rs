@@ -1,4 +1,8 @@
-use crate::domain::value_objects::{email::Email, id::Id, password::Password};
+use crate::domain::value_objects::{
+    email::{self, Email},
+    id::Id,
+    password::Password,
+};
 
 #[derive(thiserror::Error, Debug, PartialEq, Eq)]
 #[error("New password must be different")]
@@ -23,6 +27,18 @@ impl User {
             email,
             password,
         }
+    }
+
+    pub fn id(&self) -> String {
+        self.id.to_string()
+    }
+
+    pub fn email(&self) -> String {
+        self.email.to_string()
+    }
+
+    pub fn password(&self) -> String {
+        self.password.to_string()
     }
 
     pub fn change_password(&mut self, new_password: Password) -> Result<(), EqualPasswordError> {

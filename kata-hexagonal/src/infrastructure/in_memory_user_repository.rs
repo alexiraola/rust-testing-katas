@@ -33,16 +33,6 @@ impl UserRepository for InMemoryUserRepository {
         }
         Ok(())
     }
-    async fn find_by_id(&self, id: Id) -> Result<Option<User>, String> {
-        let users = match self.users.lock() {
-            Ok(lock) => lock,
-            _ => return Err("Could not unlock".to_string()),
-        };
-
-        let user = users.iter().find(|user| user.is_matching_id(&id));
-
-        Ok(user.cloned())
-    }
 
     async fn find_by_email(&self, email: Email) -> Result<Option<User>, String> {
         let users = match self.users.lock() {

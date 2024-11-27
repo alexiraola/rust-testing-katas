@@ -12,8 +12,7 @@ use crate::{
         user_register_service::UserRegisterService,
     },
     infrastructure::{
-        actix::response::ActixHttpResponse, http::HttpRequest,
-        in_memory_user_repository::InMemoryUserRepository,
+        actix::response::ActixHttpResponse, http::HttpRequest, sqlite_user_repository::Sqlite,
         user_login_controller::UserLoginController,
         user_register_controller::UserRegisterController,
     },
@@ -31,7 +30,8 @@ async fn hello() -> impl Responder {
 }
 
 #[post("/register")]
-async fn register(repo: Data<InMemoryUserRepository>, form: web::Json<FormData>) -> impl Responder {
+async fn register(repo: Data<Sqlite>, form: web::Json<FormData>) -> impl Responder {
+    log::info!("register!!!");
     let service = UserRegisterService::new(repo.into_inner());
     let controller = UserRegisterController::new(service);
     let request = HttpRequest {
@@ -48,7 +48,7 @@ async fn register(repo: Data<InMemoryUserRepository>, form: web::Json<FormData>)
 }
 
 #[post("/login")]
-async fn login(repo: Data<InMemoryUserRepository>, form: web::Json<FormData>) -> impl Responder {
+async fn login(repo: Data<Sqlite>, form: web::Json<FormData>) -> impl Responder {
     let service = UserLoginService::new(repo.into_inner());
     let controller = UserLoginController::new(service);
     let request = HttpRequest {
@@ -69,7 +69,9 @@ pub async fn create_server(host: &str, port: u16) -> std::io::Result<()> {
 
     log::info!("starting HTTP server at http://localhost:8080");
 
-    let repo = Data::new(InMemoryUserRepository::new());
+    let repository = Sqlite::new("users.db").await.unwrap();
+
+    let repo = Data::new(repository);
 
     HttpServer::new(move || {
         App::new()

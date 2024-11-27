@@ -33,6 +33,10 @@ impl Password {
         Ok(Self(Self::hash_plaintext(&plaintext)))
     }
 
+    pub fn from_hash(hash: String) -> Self {
+        Self(hash)
+    }
+
     fn hash_plaintext(plaintext: &str) -> String {
         hash::hash(plaintext)
     }
